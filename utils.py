@@ -18,3 +18,4 @@ def load_longmemeval_m_df():
     with open("longmemeval-cleaned/Long Meme Val Cleaned.json", "r", encoding="utf-8") as f:
         longmemeval_m = json.load(f)
     return pd.DataFrame(longmemeval_m)
+
