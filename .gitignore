@@ -1,3 +1,5 @@
 .env
-longmemeval-cleaned/
+data/
 __pycache__/
+.venv
+.venv/
