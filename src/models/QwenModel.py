@@ -1,22 +1,20 @@
 import re
 import json
-import torch
 from typing import Any, Optional
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from src.models.TransformersModel import TransformersModel
 
 
 class QwenModel(TransformersModel):
-    def parse_tool_calls(self, content: str) -> list:
+    def extract_tool_calls(self, content: str) -> tuple[list, str]:
         tool_calls = []
         pattern = r"<tool_call>\s*({.*?})\s*</tool_call>"
-        matches = re.findall(pattern, content, re.DOTALL)
 
-        for i, match in enumerate(matches):
-            call_data = json.loads(match)
+        def call_replacer(match):
+            call_data = json.loads(match.group(1))
+            idx = len(tool_calls)
             tool_calls.append(
                 {
-                    "id": f"call_{i}",
+                    "id": f"call_{idx}",
                     "type": "function",
                     "function": {
                         "name": call_data["name"],
@@ -24,10 +22,14 @@ class QwenModel(TransformersModel):
                     },
                 }
             )
+            return ""  # Remove the tool_call block
 
-        return tool_calls
+        # Remove all tool_call sections and collect them into tool_calls
+        cleaned_content = re.sub(pattern, call_replacer, content, flags=re.DOTALL).strip()
 
-    def parse_thinking(self, content: str) -> tuple[Optional[str], str]:
+        return tool_calls, cleaned_content
+
+    def extract_thinking(self, content: str) -> tuple[Optional[str], str]:
         thinking_blocks = [
             block.strip()
             for block in re.findall(r"<think>(.*?)</think>", content, re.DOTALL)

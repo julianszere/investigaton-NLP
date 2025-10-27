@@ -7,12 +7,12 @@ from src.models.QwenModel import QwenModel
 
 def run_experiment(N: int):
     # litellm_model = LiteLLMModel("azure/gpt-4.1")
-    model = QwenModel("Qwen/Qwen3-8B")
+    model = QwenModel("Qwen/Qwen3-4B")
     judge_agent = JudgeAgent(model)
     memory_agent = FullContextAgent(model)
 
     correct_predictions = 0
-    longmemeval_o_dataset = LongMemEvalDataset("oracle")
+    longmemeval_o_dataset = LongMemEvalDataset("short")
 
     for question, sessions, t_question, answer in longmemeval_o_dataset[:N]:
         predicted_answer = memory_agent.answer(sessions, question, t_question)

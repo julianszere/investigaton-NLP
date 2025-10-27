@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from src.experiments.pass_whole_context.longmemeval_o_experiment import run_experiment
+from src.experiments.pass_whole_context.longmemeval_experiment import run_experiment
 
 
 load_dotenv()
