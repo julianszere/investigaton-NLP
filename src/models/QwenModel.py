@@ -1,11 +1,10 @@
 import re
 import json
-from typing import Any, Optional
 from src.models.TransformersModel import TransformersModel
 
 
 class QwenModel(TransformersModel):
-    def extract_tool_calls(self, content: str) -> tuple[list, str]:
+    def extract_tool_calls(self, content):
         tool_calls = []
         pattern = r"<tool_call>\s*({.*?})\s*</tool_call>"
 
@@ -29,7 +28,7 @@ class QwenModel(TransformersModel):
 
         return tool_calls, cleaned_content
 
-    def extract_thinking(self, content: str) -> tuple[Optional[str], str]:
+    def extract_thinking(self, content):
         thinking_blocks = [
             block.strip()
             for block in re.findall(r"<think>(.*?)</think>", content, re.DOTALL)

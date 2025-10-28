@@ -2,6 +2,28 @@ import json
 import pandas as pd
 
 
+class Session:
+    def __init__(self, session_id, date, messages):
+        self.session_id = session_id
+        self.date = date
+        self.messages = messages
+
+    def __repr__(self):
+        return f"Session(session_id={self.session_id}, date={self.date}, messages={self.messages})"
+
+
+class LongMemEvalInstance:
+    def __init__(self, question_id, question, sessions, t_question, answer):
+        self.question_id = question_id
+        self.question = question
+        self.sessions = sessions
+        self.t_question = t_question
+        self.answer = answer
+
+    def __repr__(self):
+        return f"LongMemEvalInstance(question={self.question}, sessions={self.sessions}, t_question={self.t_question}, answer={self.answer})"
+
+
 class LongMemEvalDataset:
     def __init__(self, dataset_type: str):
         paths = {
@@ -26,8 +48,15 @@ class LongMemEvalDataset:
             return self.instance_from_row(sliced_data.iloc[key])
 
     def instance_from_row(self, row):
-        question = row["question"]
-        sessions = row["haystack_sessions"]
-        t_question = row["question_date"]
-        answer = row["answer"]
-        return question, sessions, t_question, answer
+        return LongMemEvalInstance(
+            question_id=row["question_id"],
+            question=row["question"],
+            sessions=[
+                Session(session_id=session_id, date=date, messages=messages)
+                for session_id, date, messages in zip(
+                    row["haystack_session_ids"], row["haystack_dates"], row["haystack_sessions"]
+                )
+            ],
+            t_question=row["question_date"],
+            answer=row["answer"],
+        )

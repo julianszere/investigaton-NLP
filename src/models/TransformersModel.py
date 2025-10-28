@@ -1,15 +1,15 @@
 import torch
-from typing import Any, Optional
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from src.models.Model import Model
 
 
-class TransformersModel:
+class TransformersModel(Model):
     def __init__(
         self,
         name,
         quantized: bool = False,
     ) -> None:
-        self.name = name
+        super().__init__(name)
         self.quantized = quantized
         self.tokenizer, self.model = self.load_base_model(quantized=quantized)
 
@@ -32,18 +32,18 @@ class TransformersModel:
         tokenizer = AutoTokenizer.from_pretrained(self.name)
         return tokenizer, model
 
-    def extract_tool_calls(self, content: str) -> tuple[list, str]:
+    def extract_tool_calls(self, content):
         raise NotImplementedError("Not implemented")
 
-    def extract_thinking(self, content: str) -> tuple[Optional[str], str]:
+    def extract_thinking(self, content):
         raise NotImplementedError("Not implemented")
 
-    def parse_response(self, content: str) -> tuple[Optional[str], list, str]:
+    def parse_response(self, content):
         reasoning_content, content = self.extract_thinking(content)
         tool_calls, content = self.extract_tool_calls(content)
         return reasoning_content, tool_calls, content
 
-    def reply(self, messages, tools=[]):
+    def reply(self, messages, tools=None):
         formatted_input = self.tokenizer.apply_chat_template(
             messages,
             tools=tools,

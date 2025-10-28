@@ -8,12 +8,11 @@ dependencies = [
     "pandas",
     "datasets",
     "huggingface-hub",
+    "pydantic",
 ]
 
 [project.optional-dependencies]
-dev = [
-    "ipykernel",
-]
+dev = ["ipykernel"]
 
 torch = [
     "torch",
@@ -21,5 +20,5 @@ torch = [
     "torchaudio",
     "transformers",
     "accelerate",
-    "bitsandbytes
+    "bitsandbytes",
 ]
