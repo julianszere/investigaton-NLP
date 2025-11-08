@@ -2,21 +2,19 @@
 
 ## Introducción
 
-Para el track de NLP proponemos el siguiente problema: Necesitamos crear un sistema para aumentar un asistente conversacional tipo chatbot con un modulo de memoria.
+Este repositorio acompaña el track de NLP y plantea el desafío de ampliar un asistente conversacional (chatbot) con un módulo de memoria.
 
-Para ayudarlxs a encarar el problema, preparamos este repo con un sistema de memoria basico basado en un retriever semantico. Recordemos que un retriever semantico puede pensarse como una funcion que, para una query Q y documentos D, devuelve la relevancia de cada documento condicionada a la query.
+Incluimos una referencia básica basada en un *semantic retriever*. Recordemos que un retriever semántico puede pensarse como una función que, para una consulta `Q` y un conjunto de documentos `D`, devuelve la relevancia de cada documento condicionada a la consulta.
 
-NO es necesario que basen su solucion en este repo, ni que sigan la estructura del mismo. Esto es solo para ayudarles a arrancar y si no les sirve ni lo miren.
+La utilización de este proyecto es completamente opcional: pueden usarlo tal cual, adaptarlo o simplemente tomarlo como fuente de inspiración.
 
 ## Estructura del proyecto
 
-Si no te interesa, podes saltear directo a setup.
+La carpeta principal es `src`. Allí van a encontrar:
 
-La carpeta principal del proyecto es `src`. Dentro de ella tienen `models`, `agents`, `datasets`, `experiments`.
-
-- `models` tiene distintas implementaciones que les pueden servir de inspiracion. LiteLLM puede estar bueno si piensan probar modelos de distintas apis, ya que unifica su interfaz. A su vez, en caso de usar un modelo de huggingface, recomendamos el uso de Qwen3, ya que soporta reasoning y tiene muy buenas capacidades de uso de tools. Es por eso que incluimos una implementacion de QwenModel. Depende del hardware que esten usando y de su experiencia, pueden tambien implementarlo usando Ollama o VLLM.
-- `agents` tiene distintas implementaciones de agentes. JudgeAgent es el que usamos para evaluar si la respuesta a una pregunta es correcta. FullContext es un agente que, dada una instancia de LongMemEval, le pasa todas las conversaciones a un modelo para que este intente responder. Si tienen acceso a un modelo con ventana de contexto muy grande, como gpt-5 o gemini, pueden intentar usarlo, aunque no lo recomendamos por no ser una solucion muy creativa y ser sumamente cara :). Finalmente RagAgente es el que implementa el modulo de rag que benchmarkeamos.
-- En `datasets` tenemos una implementacion comoda que puede servirles para entender como leer el benchmark. Como veran, definimos la clase
+- **`models`**: implementaciones de referencia. `LiteLLM` simplifica la prueba de múltiples APIs al unificar su interfaz. Si trabajan con modelos de Hugging Face sugerimos Qwen3, que ofrece buen *reasoning* y soporte de *tools*; por eso incluimos `QwenModel`. Dependiendo del hardware y la experiencia, también pueden evaluar Ollama o vLLM.
+- **`agents`**: distintos agentes ya configurados. `JudgeAgent` evalúa si la respuesta es correcta. `FullContextAgent` envía la instancia completa de LongMemEval a un modelo con ventana de contexto amplia (por ejemplo GPT-5 o Gemini); es una alternativa directa pero costosa y poco creativa. `RAGAgent` implementa el módulo de RAG que usamos para el benchmark.
+- **`datasets`**: utilidades para cargar y representar el benchmark. Incluye la clase `LongMemEvalInstance`, alineada con la definición del paper.
 
 ```python
 def instance_from_row(self, row):
@@ -34,27 +32,22 @@ def instance_from_row(self, row):
     )
 ```
 
-siguiendo la definicion del paper.
+- **`experiments`**: implementación del pipeline experimental y utilidades para cargar modelos y módulos de memoria. En `config` pueden definir qué agente usar (`fullcontext`, `rag`, etc.), qué modelo responde, qué modelo actúa como juez y otros parámetros.
 
-Finalmente en `experiments` esta la implementacion del experimento, junto con algunas utils que permiten cargar los modelos y modulos de memoria. En la carpeta `config` esta la configuracion que se usa para correr el expeirmento. La configuracion permite elegir que implementacion usar (fullcontext, rag, ... pueden agregar mas), que modelo usar para responder, que modelo usar como juez, etc...
 
 ## Setup
 
-Si no usas `uv`, es muy recomendable. Podes descargarlo e instalarlo aca: https://docs.astral.sh/uv/getting-started/installation/
+Recomendamos utilizar `uv` para gestionar el entorno. Podés descargarlo e instalarlo desde <https://docs.astral.sh/uv/getting-started/installation/>.
 
-### Instalacion de uv y requierements
+### Instalación de dependencias
 
-Una vez instalado, instala las dependencias usando
+Una vez instalado `uv`, sincronizá las dependencias:
 
 ```sh
 uv sync
 ```
 
-Es posible que aun haciendo esto les salga el error de que torch no esta instalado. Eso es porque uv sync no va a instalar torch para que ustedes puedan instalarlo manualmente segun la version que necesiten (por ej con soporte para cuda)
-
-Lo mismo con transformers.
-
-La forma mas rapida de arreglar esto es
+Es posible que `torch` y `transformers` no se instalen automáticamente para permitirles elegir versiones específicas (por ejemplo, con soporte CUDA). La instalacion mas basica es mediante:
 
 ```
 uv pip install torch transformers
@@ -62,30 +55,30 @@ uv pip install torch transformers
 
 ### Descarga de datasets
 
-Con las dependencias ya instaladas, descarga los datasets del benchmark usando
+Con el entorno configurado, descargá los datasets del benchmark:
 
 ```sh
-uv run scripts/download_dataset.py # Para descargar los datasets
+uv run scripts/download_dataset.py
 ```
 
-o
+Alternativamente, activá el entorno virtual y ejecutá el script manualmente:
 
 ```sh
-source .venv/bin/activate # Para activar el virtual environment
+source .venv/bin/activate
 python scripts/download_dataset.py
 ```
 
 ### Descarga de embeddings
 
-Como vas a ver mas adelante en este ejemplo, uno de los modulos de memoria desarrollados usa embeddings. Es decir, para cada round conversacional (un mensaje de usuario seguido de uno de un agente), calculamos su embedding
+Uno de los módulos de memoria incluidos utiliza embeddings. Para cada mensaje se calcula un embedding:
 
 [formula]
 
-Y usamos esto para hacer retrieval dada una pregunta:
+Luego se utiliza para realizar *retrieval*:
 
 [ejemplo query, retrieval, respuesta]
 
-Es posible que ustedes quieran usar algo similar, pero para arrancar nosotros les proveemos algunos embeddings precomputados para que puedan correr el ejemplo. Para descargar los embeddings precomputados, corran
+Incluimos embeddings precomputados para acelerar las primeras ejecuciones. Para descargarlos, ejecutá:
 
 ```sh
 TODO
@@ -93,17 +86,17 @@ TODO
 
 ### API Keys
 
-Si eligen correr el benchmark usando una api, van a necesitar una api key. La mejor forma de hacerlo es creando un `.env` y configurando la `OPENAI_API_KEY`
+Si vas a correr el benchmark con una API externa, configurá un archivo `.env` con la variable `OPENAI_API_KEY` (o la clave que corresponda a tu proveedor).
 
 ### Correr el benchmark
 
-Finalmente, para correr el benchmark:
+Para ejecutar el benchmark:
 
 ```sh
 uv run main.py
 ```
 
-o
+o bien:
 
 ```sh
 python main.py
@@ -111,4 +104,4 @@ python main.py
 
 ### Analizar resultados
 
-En `notebooks/rag_result_eval.ipynb` pueden ver un analisis bastante generico de los resultados. Como veran, los resultados estan segmentados segun tipo de pregunta. Esperamos que ustedes reporten los resultados de esa manera, porque los distintos tipos suelen tener distinta dificultad.
+En `notebooks/rag_result_eval.ipynb` encontrarás un análisis general de los resultados, segmentado por tipo de pregunta. Recomendamos reportar las métricas siguiendo esa segmentación, ya que cada categoría presenta distintos niveles de dificultad.
