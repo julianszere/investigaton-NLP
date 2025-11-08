@@ -1,11 +1,5 @@
 
 # LongMemEval - Resumen del Paper
-
-# Preguntas que tengo del paper
-
-- Cual es la diferencia entre LongMemEval_S y LongMemEval_M
-- Cual es la diferencia entre los tres datasets [acá](https://huggingface.co/datasets/xiaowu0162/longmemeval-cleaned/tree/main)
-
 # Resumen
 
 While the length of the history is freely extensible, we provide two standard settings
