@@ -9,10 +9,10 @@ if __name__ == "__main__":
     config = Config(
         memory_model=MemoryModelConfig(
             model_type="litellm",
-            model_name="openai/gpt-5-mini",
+            model_name="ollama/qwen3:8b-q4_K_M",
         ),
         memory_agent="RAG",
-        judge_model_name="openai/gpt-5-mini",
+        judge_model_name="ollama/qwen3:8b-q4_K_M",
         longmemeval_dataset_type="short",
         N=-1,
     )

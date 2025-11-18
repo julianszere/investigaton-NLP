@@ -1,6 +1,7 @@
 from litellm import completion
 from src.models.Model import Model
 
+
 class LiteLLMModel(Model):
     def __init__(self, name):
         super().__init__(name)
