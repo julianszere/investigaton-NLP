@@ -174,9 +174,10 @@ Incluyan estas métricas en sus tablas y gráficas.
 # Baseline
 Además de reportar las métricas principales, cada equipo debe incluir una comparación directa contra un baseline estándar de Retrieval-Augmented Generation (RAG) bajo las mismas restricciones (modelo ≤ 4B parámetros). Este repo brinda una implementacion de este RAG y pueden encontrar las instrucciones para correrlo en README.md.
 
+![Diagrama](images/RAGImage.png)
 
 
-Los tutores del evento no se hacen responsables de cualquier error que pueda haber en la implementacion brindada para el RAG (porfavor avisar si encuentran algun error). La idea es que no usen el repo como caja negra. Si existe algun error en el repo (si hay un error no fue hecho adrede) los equipos son responsables por haber utilizado codigo incorrecto. 
+Los tutores del evento no se hacen responsables por cualquier error que pueda haber en la implementación brindada para el RAG (por favor, avisen si encuentran alguno). La idea es que no usen el repositorio como una caja negra. Si existe algún error en el repositorio (si hay un error, no fue hecho adrede), los equipos son responsables por haber utilizado código incorrecto.
 
 
 #  Criterios de Evaluación
