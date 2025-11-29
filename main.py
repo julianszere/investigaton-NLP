@@ -13,7 +13,7 @@ config = Config(
     memory_model_name="ollama/gemma3:4b",
     judge_model_name="openai/gpt-5-mini", # alternativa: "ollama/gemma3:4b"
     longmemeval_dataset_type="short",
-    longmemeval_dataset_set="investigathon_evaluation", # longmemeval, investigathon_evaluation, investigathon_held_out
+    longmemeval_dataset_set="longmemeval", # longmemeval, investigathon_evaluation, investigathon_held_out
     N=10,
 )
 
