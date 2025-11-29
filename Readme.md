@@ -175,3 +175,6 @@ Vamos a enviarle en la proxima semana por mail los detalles de como enviarnos la
 # Aclaracion
 
 Los tutores del evento no se hacen responsables por cualquier error que pueda haber en la implementación brindada para el RAG (por favor, avisen si encuentran alguno). La idea es que no usen el repositorio como una caja negra. Si existe algún error en el repositorio (si hay un error, no fue hecho adrede), los equipos son responsables por haber utilizado código incorrecto.
+
+# Tutorial para conectarse a instancias de aws por SSH (van a recibir las credenciales por mail).
+https://docs.google.com/document/d/1rtE7unT78CtICDiPXrx_GK2NumEtfoRXpNb38qDvrFQ/edit?usp=sharing
