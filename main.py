@@ -11,9 +11,9 @@ load_dotenv()
 
 config = Config(
     memory_model_name="ollama/gemma3:4b",
-    judge_model_name="ollama/gemma3:12b",
+    judge_model_name="openai/gpt-5-mini",
     longmemeval_dataset_type="short",
-    longmemeval_dataset_set="longmemeval",
+    longmemeval_dataset_set="investigathon_evaluation", # longmemeval, investigathon_evaluation, investigathon_held_out
     N=10,
 )
 
@@ -65,8 +65,9 @@ for instance in longmemeval_dataset[: config.N]:
 
         print(f"  Question: {instance.question}...")
         print(f"  Predicted: {predicted_answer}")
-        print(f"  Ground Truth: {instance.answer}")
-        print(f"  Correct: {answer_is_correct}")
+        if config.longmemeval_dataset_set != "investigathon_held_out":
+            print(f"  Ground Truth: {instance.answer}")
+            print(f"  Correct: {answer_is_correct}")
         print("-" * 100)
 
 print("EVALUATION COMPLETE")

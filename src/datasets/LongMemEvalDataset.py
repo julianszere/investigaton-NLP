@@ -44,7 +44,7 @@ class LongMemEvalDataset:
         elif set == "investigathon_evaluation":
             path = {
                 "oracle": "data/investigathon/Investigathon_LLMTrack_Evaluation_oracle.json",  # Solo sesiones relevantes
-                "full": "data/investigathon/Investigathon_LLMTrack_Evaluation_s_cleaned.json",  # Todas las sesiones (~115k tokens)
+                "short": "data/investigathon/Investigathon_LLMTrack_Evaluation_s_cleaned.json",  # Todas las sesiones (~115k tokens)
             }[type]
         elif set == "investigathon_held_out":
             if type != "short":
