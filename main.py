@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 from dotenv import load_dotenv
@@ -9,12 +10,52 @@ from config.config import Config
 
 load_dotenv()
 
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Run LongMemEval evaluation pipeline")
+    parser.add_argument(
+        "--memory-model",
+        type=str,
+        default="ollama/gemma3:4b",
+        help="Model name for memory/RAG agent (default: ollama/gemma3:4b)"
+    )
+    parser.add_argument(
+        "--judge-model",
+        type=str,
+        default="openai/gpt-5-mini",
+        help="Model name for judge agent (default: openai/gpt-5-mini)"
+    )
+    parser.add_argument(
+        "--dataset-type",
+        type=str,
+        default="short",
+        choices=["oracle", "short"],
+        help="Dataset type: oracle, short (default: short)"
+    )
+    parser.add_argument(
+        "--dataset-set",
+        type=str,
+        default="longmemeval",
+        choices=["longmemeval", "investigathon_evaluation", "investigathon_held_out"],
+        help="Dataset set to use (default: longmemeval)"
+    )
+    parser.add_argument(
+        "-n", "--num-samples",
+        type=int,
+        default=10,
+        help="Number of samples to process (default: 10)"
+    )
+    return parser.parse_args()
+
+
+args = parse_args()
+
 config = Config(
-    memory_model_name="ollama/gemma3:4b",
-    judge_model_name="openai/gpt-5-mini", # alternativa: "ollama/gemma3:4b"
-    longmemeval_dataset_type="short",
-    longmemeval_dataset_set="longmemeval", # longmemeval, investigathon_evaluation, investigathon_held_out
-    N=10,
+    memory_model_name=args.memory_model,
+    judge_model_name=args.judge_model,
+    longmemeval_dataset_type=args.dataset_type,
+    longmemeval_dataset_set=args.dataset_set,
+    N=args.num_samples,
 )
 
 print(f"\nInitializing models...")

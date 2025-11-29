@@ -133,31 +133,30 @@ python main.py
 Para evaluar tu sistema en el **set de evaluación** (que incluye respuestas correctas):
 
 ```sh
-python run_evaluation.py --dataset_type full --n_samples 250
+python main.py --dataset-set investigathon_evaluation --dataset_type short --num-samples 250
 ```
 
-Este script usa la **misma configuración RAG que `main.py`**. 
-
 Parámetros:
-- `--dataset_type`: `oracle` (solo sesiones relevantes) o `full` (todas las ~53 sesiones, ~115k tokens) [default: `full`]
-- `--n_samples`: número de muestras a procesar [default: 250]
+
+- `--dataset_type`: `oracle` (solo sesiones relevantes) o `short` (todas las ~53 sesiones, ~115k tokens) [default: `short`]
+- `--num-samples`: número de muestras a procesar [default: 250]
 
 Los resultados se guardarán en `data/results/` con métricas de accuracy.
 
-**Nota:** Para cambiar la configuración (modelo, embedding, etc.), edita la función `load_config_from_main()` en `run_evaluation.py` o modifica directamente `main.py`.
+**Nota:** Para cambiar la configuración (modelo, embedding, etc.) modifica directamente `main.py`.
 
 #### Generar predicciones para el Held-Out Set (SUBMISIÓN FINAL)
 
 Para generar las predicciones del **set held-out** (sin respuestas, para submisión):
 
 ```sh
-python run_held_out.py --n_samples 250
+python run_held_out.py --num-samples 250
 ```
 
 Este script usa la **misma configuración RAG que `main.py`** y genera un archivo JSON con las predicciones que debes entregar antes del **11/12 a las 16:00**.
 
 Parámetros:
-- `--n_samples`: número de muestras a procesar [default: 250]
+- `--num-samples`: número de muestras a procesar [default: 250]
 - `--output_file`: ruta del archivo de salida (opcional)
 
 El formato de salida será:
