@@ -1,0 +1,5 @@
+Borrar la memoria
+pkill -9 python3 && sudo nvidia-smi --gpu-reset -i 0
+
+PUSH
+GIT_ASKPASS= SSH_ASKPASS= git -c core.askPass= -c credential.helper=none push

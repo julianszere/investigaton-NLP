@@ -13,9 +13,9 @@ def embed_text(message, embedding_model_name):
 
 def get_messages_and_embeddings(instance: LongMemEvalInstance, embedding_model_name):
     cache_path = f"data/rag/embeddings_{embedding_model_name.replace('/', '_')}/{instance.question_id}.parquet"
-    if os.path.exists(cache_path):
-        df = pd.read_parquet(cache_path)
-        return df["messages"].tolist(), df["embeddings"].tolist()
+    # if os.path.exists(cache_path):
+    #     df = pd.read_parquet(cache_path)
+    #     return df["messages"].tolist(), df["embeddings"].tolist()
 
     messages = []
     embeddings = []
@@ -47,7 +47,7 @@ class RAGAgent:
         self.embedding_model_name = embedding_model_name
 
     def answer(self, instance: LongMemEvalInstance):
-        most_relevant_messages = retrieve_most_relevant_messages(instance, 10, self.embedding_model_name)
+        most_relevant_messages = retrieve_most_relevant_messages(instance, 5, self.embedding_model_name)
 
         prompt = f"""
         You are a helpful assistant that answers a question based on the evidence.
@@ -55,6 +55,7 @@ class RAGAgent:
         The question is: {instance.question}
         Return the answer to the question.
         """
+        print(prompt)
         messages = [{"role": "user", "content": prompt}]
         answer = self.model.reply(messages)
         return answer
