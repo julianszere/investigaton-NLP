@@ -19,13 +19,13 @@ def parse_args():
     parser.add_argument(
         "--memory-model",
         type=str,
-        default="ollama/gemma3:4b",
+        default="google/gemma-2b",
         help="Model name for memory/RAG agent (default: ollama/gemma3:4b)"
     )
     parser.add_argument(
         "--judge-model",
         type=str,
-        default="ollama/gemma3:4b",#"openai/gpt-5-mini",
+        default="google/gemma-2b",#"openai/gpt-5-mini",
         help="Model name for judge agent (default: openai/gpt-5-mini)"
     )
     parser.add_argument(

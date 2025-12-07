@@ -68,7 +68,8 @@ class LongMemEvalDataset:
         if isinstance(key, slice):
             return [self.instance_from_row(row) for _, row in sliced_data.iterrows()]
         else:
-            return self.instance_from_row(sliced_data.iloc[key])
+            # return self.instance_from_row(sliced_data.iloc[key])
+            return self.instance_from_row(sliced_data) #Pongo esta pq dice chatgpt
 
     def instance_from_row(self, row):
         return LongMemEvalInstance(

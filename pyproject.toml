@@ -11,5 +11,9 @@ dependencies = [
     "pydantic",
     "gdown",
     "ipykernel",
-    "black"
+    "black",
+    "matplotlib>=3.10.7",
+    "torch>=2.9.1",
+    "transformer-lens>=2.16.1",
+    "seaborn>=0.13.2",
 ]

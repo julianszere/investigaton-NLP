@@ -20,6 +20,7 @@ def get_messages_and_embeddings(instance: LongMemEvalInstance, embedding_model_n
     messages = []
     embeddings = []
     for session in tqdm(instance.sessions, desc="Embedding sessions"):
+        # print(session) #Correr esto para ver todas las sesiones en la instancia.
         for message in session.messages:
             messages.append(message)
             embeddings.append(embed_text(f"{message['role']}: {message['content']}", embedding_model_name))
@@ -46,8 +47,8 @@ class RAGAgent:
         self.model = model
         self.embedding_model_name = embedding_model_name
 
-    def answer(self, instance: LongMemEvalInstance):
-        most_relevant_messages = retrieve_most_relevant_messages(instance, 5, self.embedding_model_name)
+    def relevant_messages_and_answer(self, instance: LongMemEvalInstance):
+        most_relevant_messages = retrieve_most_relevant_messages(instance, 10, self.embedding_model_name)
 
         prompt = f"""
         You are a helpful assistant that answers a question based on the evidence.
@@ -55,7 +56,8 @@ class RAGAgent:
         The question is: {instance.question}
         Return the answer to the question.
         """
-        print(prompt)
+        # print(prompt)
         messages = [{"role": "user", "content": prompt}]
         answer = self.model.reply(messages)
-        return answer
+        return most_relevant_messages, answer
+    

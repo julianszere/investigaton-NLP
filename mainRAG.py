@@ -10,7 +10,6 @@ from config.config import Config
 
 load_dotenv()
 
-
 def parse_args():
     parser = argparse.ArgumentParser(description="Run LongMemEval evaluation pipeline")
     parser.add_argument(
@@ -22,7 +21,7 @@ def parse_args():
     parser.add_argument(
         "--judge-model",
         type=str,
-        default="ollama/gemma3:4b",#"openai/gpt-5-mini",
+        default="openai/gpt-5-mini",#"openai/gpt-5-mini",
         help="Model name for judge agent (default: openai/gpt-5-mini)"
     )
     parser.add_argument(
@@ -42,7 +41,7 @@ def parse_args():
     parser.add_argument(
         "-n", "--num-samples",
         type=int,
-        default=2,
+        default=500,
         help="Number of samples to process (default: 10)"
     )
     return parser.parse_args()
@@ -71,32 +70,48 @@ memory_agent = RAGAgent(model=memory_model, embedding_model_name=config.embeddin
 longmemeval_dataset = LongMemEvalDataset(config.longmemeval_dataset_type, config.longmemeval_dataset_set)
 
 # Create results directory
-results_dir = f"data/results/{config.longmemeval_dataset_set}/{config.longmemeval_dataset_type}/embeddings_{config.embedding_model_name.replace('/', '_')}_memory_{config.memory_model_name.replace('/', '_')}_judge_{config.judge_model_name.replace('/', '_')}"
+results_dir = f"data/results/RAG/{config.longmemeval_dataset_set}/{config.longmemeval_dataset_type}/embeddings_{config.embedding_model_name.replace('/', '_')}_memory_{config.memory_model_name.replace('/', '_')}_judge_{config.judge_model_name.replace('/', '_')}"
 os.makedirs(results_dir, exist_ok=True)
 
 print(f"\nResults will be saved to: {results_dir}")
 print(f"Processing samples...")
 print("=" * 100)
 
-# Process samples
-for instance in longmemeval_dataset[1: config.N]:
-    result_file = f"{results_dir}/{instance.question_id}.json"
+i = 0
 
+print(f"Dataset length: {len(longmemeval_dataset)}")
+
+import time
+
+# Process samples
+for instance in longmemeval_dataset[: config.N]: #MODIFIQUE ESTO
+    result_file = f"{results_dir}/{instance.question_id}.json"
+    
+    print("Vamos por la instancia: ", i)
+    i += 1
+    
     # if os.path.exists(result_file):
     #     print(f"Skipping {instance.question_id} because it already exists", flush=True)
     #     continue
 
-    predicted_answer = memory_agent.answer(instance)
+    start_time = time.time()
+    
+    relevant_context_by_RAG, predicted_answer = memory_agent.relevant_messages_and_answer(instance) #AGREGO ESTO para guardar el contexto encontrado por RAG.
 
     if config.longmemeval_dataset_set != "investigathon_held_out":
         answer_is_correct = judge_agent.judge(instance, predicted_answer)
 
+    
+    elapsed_time = time.time() - start_time
+    
     # Save result
     with open(result_file, "w", encoding="utf-8") as f:
         result = {
             "question_id": instance.question_id,
             "question": instance.question,
             "predicted_answer": predicted_answer,
+            "relevant_context_by_RAG": relevant_context_by_RAG, #AGREGO ESTO
+            "instance_time": elapsed_time,   #AGREGO ESTO
         }
         if config.longmemeval_dataset_set != "investigathon_held_out":
             result["answer"] = instance.answer

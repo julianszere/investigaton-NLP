@@ -10,8 +10,8 @@ from src.datasets.LongMemEvalDataset import LongMemEvalDataset
 from config.config import Config
 from transformer_lens import HookedTransformer
 from sae_lens import SAE
-from src.agents.SAEAgent import sae_encode_text, load_or_compute_sae_embeddings, sae_retrieve
-from src.agents.RAGAgent import embed_text
+from src.agents.SAEAgent import embed_text as sae_embed_text
+from src.agents.RAGAgent import embed_text as rag_embed_text
 import torch
 
 
@@ -116,8 +116,8 @@ sae, sae_cfg, sparsity = SAE.from_pretrained(
 sae.eval()
 
 def sae_similarity(text_1, text_2):
-    z1 = sae_encode_text(sae_base_model, sae, text_1, hook_name)
-    z2 = sae_encode_text(sae_base_model, sae, text_2, hook_name)
+    z1 = sae_embed_text(sae_base_model, sae, text_1, hook_name)
+    z2 = sae_embed_text(sae_base_model, sae, text_2, hook_name)
 
     z1_norm = z1 / np.linalg.norm(z1)
     z2_norm = z2 / np.linalg.norm(z2)

@@ -6,25 +6,33 @@ from tqdm import tqdm
 from src.datasets.LongMemEvalDataset import LongMemEvalInstance
 
 
-def sae_encode_text(model, sae, text, hook_name, prepend_bos=True):
+def embed_text(model, sae, text, hook_name, prepend_bos=True, method="mean",k=3):
     with torch.no_grad():
         tokens = model.to_tokens(text, prepend_bos=prepend_bos)
         _, cache = model.run_with_cache(tokens, names_filter=[hook_name])
-        acts = cache[hook_name]
-        acts_no_bos = acts[:, 1:, :]
-        feature_acts = sae.encode(acts_no_bos)
-        
-        #Opcion 1: mean
-        # z = feature_acts.mean(dim=1)
-        
-        #Opcioón 2: max
-        z = feature_acts.max(dim=1).values
-        
+        acts = cache[hook_name]              # [batch, seq, d_model]
+        acts_no_bos = acts[:, 1:, :]         # [batch, seq-1, d_model]
+        feature_acts = sae.encode(acts_no_bos)  # [batch, seq-1, n_features]
+
+        if method == "mean":
+            z = feature_acts.mean(dim=1)     # [B, F]
+
+        elif method == "max":
+            z = feature_acts.max(dim=1).values  # [B, F]
+
+        elif method == "topk":
+            seq_len = feature_acts.shape[1]
+            k_eff = min(k, seq_len)
+            topk_vals, _ = torch.topk(feature_acts, k=k_eff, dim=1)
+            z = topk_vals.mean(dim=1)        # [B, F]
+
+        else:
+            raise ValueError(f"Unknown method '{method}', choose from 'mean', 'max', 'topk'.")
+
         return z.squeeze(0).cpu().numpy()
 
 
-
-def load_or_compute_sae_embeddings(instance: LongMemEvalInstance, sae, model, hook_name):
+def get_messages_and_embeddings(instance: LongMemEvalInstance, sae, model, hook_name):
     cache_path = f"data/sae_embeddings/{instance.question_id}.parquet"
     # if os.path.exists(cache_path):
     #     df = pd.read_parquet(cache_path)
@@ -36,8 +44,7 @@ def load_or_compute_sae_embeddings(instance: LongMemEvalInstance, sae, model, ho
         for message in session.messages:
             messages.append(message)
             msg_text = f"{message['role']}: {message['content']}"
-            z = sae_encode_text(model, sae, msg_text, hook_name)
-            z = z / np.linalg.norm(z)
+            z = embed_text(model, sae, msg_text, hook_name)
             embeddings.append(z)
 
     os.makedirs(os.path.dirname(cache_path), exist_ok=True)
@@ -45,9 +52,9 @@ def load_or_compute_sae_embeddings(instance: LongMemEvalInstance, sae, model, ho
     return messages, embeddings
 
 
-def sae_retrieve(instance: LongMemEvalInstance, sae, model, hook_name, k: int = 10):
-    question_embedding = sae_encode_text(model, sae, instance.question, hook_name)
-    messages, embeddings = load_or_compute_sae_embeddings(instance, sae, model, hook_name)
+def retrieve_most_relevant_messages(instance: LongMemEvalInstance, sae, model, hook_name, k: int = 10):
+    question_embedding = embed_text(model, sae, instance.question, hook_name)
+    messages, embeddings = get_messages_and_embeddings(instance, sae, model, hook_name)
     embeddings = np.vstack(embeddings)
     similarity_scores = np.dot(embeddings, question_embedding)
     most_relevant_messages_indices = np.argsort(similarity_scores)[::-1][:k]
@@ -66,13 +73,7 @@ class SAEAgent:
         self.base_model.eval()
 
     def answer(self, instance: LongMemEvalInstance):
-        most_relevant_messages = sae_retrieve(
-            instance,
-            self.sae,
-            self.base_model,
-            self.hook_name,
-            k=5,
-        )
+        most_relevant_messages = retrieve_most_relevant_messages(instance, self.sae, self.base_model, self.hook_name, k=5)
 
         prompt = f"""
         You are a helpful assistant that answers a question **based only on evidence**.
