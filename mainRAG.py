@@ -7,6 +7,7 @@ from src.agents.JudgeAgent import JudgeAgent
 from src.agents.RAGAgent import RAGAgent
 from src.datasets.LongMemEvalDataset import LongMemEvalDataset
 from config.config import Config
+import time
 
 load_dotenv()
 
@@ -81,7 +82,6 @@ i = 0
 
 print(f"Dataset length: {len(longmemeval_dataset)}")
 
-import time
 
 # Process samples
 for instance in longmemeval_dataset[: config.N]: #MODIFIQUE ESTO
@@ -95,14 +95,11 @@ for instance in longmemeval_dataset[: config.N]: #MODIFIQUE ESTO
     #     continue
 
     start_time = time.time()
-    
-    relevant_context_by_RAG, predicted_answer = memory_agent.relevant_messages_and_answer(instance) #AGREGO ESTO para guardar el contexto encontrado por RAG.
+    predicted_answer, predicted_relevant_messages = memory_agent.answer(instance)
+    elapsed_time = time.time() - start_time
 
     if config.longmemeval_dataset_set != "investigathon_held_out":
         answer_is_correct = judge_agent.judge(instance, predicted_answer)
-
-    
-    elapsed_time = time.time() - start_time
     
     # Save result
     with open(result_file, "w", encoding="utf-8") as f:
@@ -110,8 +107,8 @@ for instance in longmemeval_dataset[: config.N]: #MODIFIQUE ESTO
             "question_id": instance.question_id,
             "question": instance.question,
             "predicted_answer": predicted_answer,
-            "relevant_context_by_RAG": relevant_context_by_RAG, #AGREGO ESTO
-            "instance_time": elapsed_time,   #AGREGO ESTO
+            "predicted_relevant_messages": predicted_relevant_messages,
+            "elapsed_time": elapsed_time,
         }
         if config.longmemeval_dataset_set != "investigathon_held_out":
             result["answer"] = instance.answer

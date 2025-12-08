@@ -10,6 +10,7 @@ from src.agents.JudgeAgent import JudgeAgent
 from src.agents.SAEAgent import SAEAgent
 from src.datasets.LongMemEvalDataset import LongMemEvalDataset
 from config.config import Config
+import time
 
 load_dotenv()
 
@@ -19,13 +20,13 @@ def parse_args():
     parser.add_argument(
         "--memory-model",
         type=str,
-        default="google/gemma-2b",
+        default="ollama/gemma3:4b",
         help="Model name for memory/RAG agent (default: ollama/gemma3:4b)"
     )
     parser.add_argument(
         "--judge-model",
         type=str,
-        default="google/gemma-2b",#"openai/gpt-5-mini",
+        default="openai/gpt-5-mini",
         help="Model name for judge agent (default: openai/gpt-5-mini)"
     )
     parser.add_argument(
@@ -66,22 +67,15 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"\nInitializing models...")
 print(f"  Memory Model (generator): {config.memory_model_name}")
 print(f"  Judge Model: {config.judge_model_name}")
-print(f"  Embedding Model (unused by SAE): {config.embedding_model_name}")
 
 generator_model = LiteLLMModel(config.memory_model_name)
 judge_model = LiteLLMModel(config.judge_model_name)
 judge_agent = JudgeAgent(model=judge_model)
 
-sae_base_model_name = "google/gemma-2b"
-sae_release = "gemma-2b-res-jb"
-sae_id = "blocks.17.hook_resid_post"
-hook_name = "blocks.17.hook_resid_post" 
-
-# sae_base_model_name = "EleutherAI/pythia-70m-deduped"
-# sae_release = "pythia-70m-deduped-res-sm"
-# sae_id = "blocks.5.hook_resid_post"
-# hook_name = "blocks.5.hook_resid_post" 
-
+sae_base_model_name = "gemma-2b-it"
+sae_release = "gemma-2b-it-res-jb"
+sae_id = "blocks.12.hook_resid_post"
+hook_name = "blocks.12.hook_resid_post" 
 
 print(f"  SAE Base Model: {sae_base_model_name}")
 print(f"  SAE Release: {sae_release}")
@@ -98,7 +92,6 @@ sae, sae_cfg, sparsity = SAE.from_pretrained(
     sae_id=sae_id,
     device=device,
 )
-#hook_name = sae_cfg["hook_name"]  # e.g. "blocks.20.hook_resid_post"
 sae.eval()
 
 memory_agent = SAEAgent(
@@ -130,7 +123,9 @@ for instance in longmemeval_dataset[1: config.N]: #NO OLVIDARSE ESTO
     #     print(f"Skipping {instance.question_id} because it already exists", flush=True)
     #     continue
 
-    predicted_answer = memory_agent.answer(instance)
+    start_time = time.time()
+    predicted_answer, predicted_relevant_messages = memory_agent.answer(instance)
+    elapsed_time = time.time() - start_time
 
     if config.longmemeval_dataset_set != "investigathon_held_out":
         answer_is_correct = judge_agent.judge(instance, predicted_answer)
@@ -141,6 +136,8 @@ for instance in longmemeval_dataset[1: config.N]: #NO OLVIDARSE ESTO
             "question_id": instance.question_id,
             "question": instance.question,
             "predicted_answer": predicted_answer,
+            "predicted_relevant_messages": predicted_relevant_messages,
+            "elapsed_time": elapsed_time,
         }
         if config.longmemeval_dataset_set != "investigathon_held_out":
             result["answer"] = instance.answer

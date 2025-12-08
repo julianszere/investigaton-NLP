@@ -47,7 +47,7 @@ class RAGAgent:
         self.model = model
         self.embedding_model_name = embedding_model_name
 
-    def relevant_messages_and_answer(self, instance: LongMemEvalInstance):
+    def answer(self, instance: LongMemEvalInstance):
         most_relevant_messages = retrieve_most_relevant_messages(instance, 10, self.embedding_model_name)
 
         prompt = f"""
@@ -59,5 +59,5 @@ class RAGAgent:
         # print(prompt)
         messages = [{"role": "user", "content": prompt}]
         answer = self.model.reply(messages)
-        return most_relevant_messages, answer
+        return answer, most_relevant_messages
     
