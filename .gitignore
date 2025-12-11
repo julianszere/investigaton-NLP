@@ -2,6 +2,7 @@
 data/
 __pycache__/
 .venv
+.venv311
 .venv/
 jobs/
 logs/apikey.env

@@ -35,7 +35,7 @@ def parse_args():
     parser.add_argument(
         "--dataset-set",
         type=str,
-        default="longmemeval",
+        default="investigathon_evaluation",
         choices=["longmemeval", "investigathon_evaluation", "investigathon_held_out"],
         help="Dataset set to use (default: longmemeval)"
     )
@@ -78,21 +78,19 @@ print(f"\nResults will be saved to: {results_dir}")
 print(f"Processing samples...")
 print("=" * 100)
 
-i = 0
 
 print(f"Dataset length: {len(longmemeval_dataset)}")
-
-
-# Process samples
-for instance in longmemeval_dataset[: config.N]: #MODIFIQUE ESTO
-    result_file = f"{results_dir}/{instance.question_id}.json"
+i = 0
+for instance in longmemeval_dataset[: config.N]:
     
-    print("Vamos por la instancia: ", i)
+    print(f"Instancia n° {i}")
     i += 1
     
-    # if os.path.exists(result_file):
-    #     print(f"Skipping {instance.question_id} because it already exists", flush=True)
-    #     continue
+    result_file = f"{results_dir}/{instance.question_id}.json"
+   
+    if os.path.exists(result_file):
+        print(f"Skipping {instance.question_id} because it already exists", flush=True)
+        continue
 
     start_time = time.time()
     predicted_answer, predicted_relevant_messages = memory_agent.answer(instance)

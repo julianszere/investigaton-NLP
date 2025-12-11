@@ -6,8 +6,8 @@ class Config(BaseModel):
 
     memory_model_name: str = Field(..., description="Memory model name")
     embedding_model_name: str = Field(
-        default="ollama/nomic-embed-text", description="Name of the embedding model"
-    )
+        default="nomic-ai/nomic-embed-text-v1", description="Name of the embedding model"
+    ) # ollama/nomic-embed-text 
     judge_model_name: str = Field(..., description="Judge model name")
 
     longmemeval_dataset_type: Literal["oracle", "short", "long"] = Field(

@@ -7,7 +7,7 @@ from transformer_lens import HookedTransformer
 from sae_lens import SAE
 from src.models.LiteLLMModel import LiteLLMModel
 from src.agents.JudgeAgent import JudgeAgent
-from src.agents.SAEAgent import SAEAgent
+from src.agents.RAGSAEAgent import RAGSAEAgent
 from src.datasets.LongMemEvalDataset import LongMemEvalDataset
 from config.config import Config
 import time
@@ -39,7 +39,7 @@ def parse_args():
     parser.add_argument(
         "--dataset-set",
         type=str,
-        default="investigathon_evaluation",
+        default="investigathon_held_out",
         choices=["longmemeval", "investigathon_evaluation", "investigathon_held_out"],
         help="Dataset set to use (default: longmemeval)"
     )
@@ -67,6 +67,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"\nInitializing models...")
 print(f"  Memory Model (generator): {config.memory_model_name}")
 print(f"  Judge Model: {config.judge_model_name}")
+print(f"  Embedding Model: {config.embedding_model_name}")
 
 generator_model = LiteLLMModel(config.memory_model_name)
 judge_model = LiteLLMModel(config.judge_model_name)
@@ -94,19 +95,20 @@ sae, sae_cfg, sparsity = SAE.from_pretrained(
 )
 sae.eval()
 
-memory_agent = SAEAgent(
+memory_agent = RAGSAEAgent(
     generator_model=generator_model,
-    sae=sae,
-    base_model=sae_base_model,
+    sae_embedding_model=sae,
+    sae_model=sae_base_model,
     hook_name=hook_name,
+    rag_embedding_model_name=config.embedding_model_name,
 )
 
 longmemeval_dataset = LongMemEvalDataset(config.longmemeval_dataset_type, config.longmemeval_dataset_set)
 
 results_dir = (
-    f"data/results/SAE/{config.longmemeval_dataset_set}/{config.longmemeval_dataset_type}/"
-    f"SAE_{sae_release.replace('/', '_')}_{sae_id}_generator_{config.memory_model_name.replace('/', '_')}"
-    f"_judge_{config.judge_model_name.replace('/', '_')}"
+    f"data/results/RAGSAE/{config.longmemeval_dataset_set}/{config.longmemeval_dataset_type}/"
+    f"SAE_{sae_release.replace('/', '_')}_{sae_id}_embeddings_{config.embedding_model_name.replace('/', '_')}_generator_{config.memory_model_name.replace('/', '_')}"
+    f"_judge_{config.judge_model_name.replace('/', '_')}_cleaned"
 )
 os.makedirs(results_dir, exist_ok=True)
 
@@ -121,7 +123,7 @@ print(f"Dataset length: {len(longmemeval_dataset)}")
 i = 0
 for instance in longmemeval_dataset[: config.N]: #MODIFIQUE ESTO
     
-    print(f"Instancia n° {i}")
+    print(f"Instance n° {i}")
     i += 1
     
     result_file = f"{results_dir}/{instance.question_id}.json"
@@ -143,8 +145,8 @@ for instance in longmemeval_dataset[: config.N]: #MODIFIQUE ESTO
             "question_id": instance.question_id,
             "question": instance.question,
             "predicted_answer": predicted_answer,
-            "predicted_relevant_messages": predicted_relevant_messages,
-            "elapsed_time": elapsed_time,
+            # "predicted_relevant_messages": predicted_relevant_messages,
+            # "elapsed_time": elapsed_time,
         }
         if config.longmemeval_dataset_set != "investigathon_held_out":
             result["answer"] = instance.answer
