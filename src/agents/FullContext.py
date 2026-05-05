@@ -1,7 +1,8 @@
 from src.agents.MemoryAgent import MemoryAgent
 from src.datasets.LongMemEvalDataset import LongMemEvalInstance
 
-class FullContextAgent(MemoryAgent):
+
+class FullContext(MemoryAgent):
     def __init__(self, model="azure/gpt-4.1"):
         self.model = model
 

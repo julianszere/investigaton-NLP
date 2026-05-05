@@ -6,8 +6,8 @@ import torch
 from transformer_lens import HookedTransformer
 from sae_lens import SAE
 from src.models.LiteLLMModel import LiteLLMModel
-from src.agents.JudgeAgent import JudgeAgent
-from src.agents.SAEAgent import get_messages_and_embeddings
+from src.agents.Judge import Judge
+from src.agents.SAE import get_messages_and_embeddings
 from src.datasets.LongMemEvalDataset import LongMemEvalDataset
 import time
 

@@ -1,89 +1,91 @@
-# Explicación del Benchmark y de criterios de evaluación para el Investigathon de YHat
+# Explanation of the Benchmark and Evaluation Criteria for the YHat Investigathon
 
-## Introducción
+## Introduction
 
-LongMemEval es un benchmark diseñado para evaluar sistemas de memoria de largo plazo en asistentes conversacionales. A diferencia de tareas clásicas de QA, acá el foco está en medir **si un sistema puede recordar, actualizar, sintetizar y recuperar información dispersa en historiales extensos**.
+LongMemEval is a benchmark designed to evaluate long-term memory systems in conversational assistants. Unlike classic QA tasks, the focus here is on measuring **whether a system can remember, update, synthesize, and retrieve information dispersed across long histories**.
 
-En este documento explicamos:
+In this document we explain:
 
-- Cómo está formulado el benchmark original de LongMemEval.  
-- Qué habilidades mide y cómo se construyen las instancias.  
-- Cómo evaluamos en este track del Investigathón, incluyendo nuestro *own benchmark extension* con preguntas nuevas.  
-- Qué deben entregar los equipos y cómo será evaluado.
+- How the original LongMemEval benchmark is formulated.  
+- What skills it measures and how instances are constructed.  
+- How we evaluate in this Investigathon track, including our *own benchmark extension* with new questions.  
+- What teams must submit and how they will be evaluated.
 
 ---
 
-## Version del Benchmark Utilizado
+## Version of the Benchmark Used
 
-En esta competencia vamos a usar la version S de LongMemEval que tiene una secuencia de sesiones que llega a ~115k tokens en total
+In this competition we will use the **S version** of LongMemEval, which contains a sequence of sessions totaling ~115k tokens.
 
-### Formulación
+### Formulation
 
-Cada instancia del benchmark es una **4-upla**:
+Each benchmark instance is a **4-tuple**:
 
 \[
-$(S, q, a)$
+(S, q, a)
 \]
 
-donde:
+where:
 
-- **S** es una secuencia de sesiones ordenadas cronológicamente:  
-  
-  $S \equiv [(t_1, S_1), (t_2, S_2), ..., (t_N, S_N)]$
+- **S** is a sequence of sessions ordered chronologically:  
 
-- Cada **Sᵢ** es una interacción multi-turno entre usuario y asistente. Cada mensaje cuenta con un timestamp temporal  
-- Cada sesión se puede descomponer en *rounds*: un mensaje del usuario seguido de uno del asistente.  
-- **q** es la pregunta final.  
-- **a** es la respuesta correcta (corta y concisa).
+  \[
+  S \equiv [(t_1, S_1), (t_2, S_2), ..., (t_N, S_N)]
+  \]
 
-### ¿Cómo se evalúa?
+- Each **Sᵢ** is a multi-turn interaction between the user and the assistant. Each message has a timestamp.  
+- Each session can be decomposed into *rounds*: one user message followed by one assistant message.  
+- **q** is the final question.  
+- **a** is the correct answer (short and concise).
 
-- El sistema recibe el historial completo `S` el cual debe procesar de alguna manera (puede ser RAG como vamos a mostrar o cualquier sistema que se les ocurra).  
-- Luego se le da la pregunta `q`.  
-- Debe generar una respuesta que será evaluada por un LLM (ver sección Métricas).
+### How is it evaluated?
+
+- The system receives the full history `S`, which it must process somehow (e.g., using RAG or any approach you design).  
+- Then it is given the question `q`.  
+- It must generate an answer that will be evaluated by an LLM (see Metrics section).
 
 ---
 
-## Qué mide LongMemEval
+## What LongMemEval Measures
 
-El benchmark evalúa cinco habilidades fundamentales:
+The benchmark evaluates five fundamental abilities:
 
 ### **1. Information Extraction (IE)**  
-Recordar detalles específicos del historial, dichos por el usuario o por el asistente.
+Recall specific details from the history, whether stated by the user or the assistant.
 
 ### **2. Multi-Session Reasoning (MR)**  
-Integrar información de distintas sesiones para responder preguntas que requieren síntesis.
+Integrate information across different sessions to answer questions requiring synthesis.
 
 ### **3. Knowledge Updates (KU)**  
-Detectar y actualizar la información del usuario a medida que cambia en el tiempo.
+Detect and update user information as it changes over time.
 
 ### **4. Temporal Reasoning (TR)**  
-Razonar sobre fechas, secuencias y eventos ordenados temporalmente.
+Reason about dates, sequences, and temporally ordered events.
 
 ### **5. Abstention (ABS)**  
-Reconocer cuando una pregunta no puede ser respondida con la información disponible y devolver "I don’t know".
+Recognize when a question cannot be answered with the available information and return "I don’t know".
 
 ---
 
-## Tipos de Preguntas
+## Question Types
 
-LongMemEval genera siete categorías principales:
+LongMemEval generates seven main categories:
 
 - **Single-session-user**  
 - **Single-session-assistant**  
-- **Single-session-preference**
-- **Multi-session** (MR)
-- **Knowledge-update** (KU)
-- **Temporal-reasoning** (TR)
-- **Abstention** (30 preguntas diseñadas para medir no-alucinación)
+- **Single-session-preference**  
+- **Multi-session** (MR)  
+- **Knowledge-update** (KU)  
+- **Temporal-reasoning** (TR)  
+- **Abstention** (30 questions designed to measure non-hallucination)
 
-Cada categoría captura un patrón distinto del comportamiento esperado de un asistente memorioso.
+Each category captures a different expected behavior of a memory-capable assistant.
 
 ---
 
-## Cómo se construye el benchmark original
+## How the Original Benchmark is Built
 
-El benchmark define 164 atributos organizados en:
+The benchmark defines 164 attributes organized into:
 
 - lifestyle  
 - belongings  
@@ -92,96 +94,104 @@ El benchmark define 164 atributos organizados en:
 - demographic information  
 
 ### Background sampling  
-Para cada atributo, un LLM genera un párrafo narrado desde la perspectiva del usuario.
+For each attribute, an LLM generates a paragraph written from the user’s perspective.
 
 ### QA generation  
-A partir del párrafo, otro modelo genera pares (pregunta, respuesta).  
-Estas preguntas luego pasan por revisión humana para calidad y diversidad.
+From each paragraph, another model generates (question, answer) pairs.  
+These are then reviewed by humans for quality and diversity.
 
-### 5.3 Evidence Session Construction
-Los autores generan sesiones adicionales que contienen la evidencia necesaria para responder las preguntas, pero distribuidas y mezcladas con ruido conversacional realista.
+### Evidence Session Construction  
+The authors generate additional sessions containing the evidence needed to answer the questions, but distributed and mixed with realistic conversational noise.
 
-### 5.4 History Compilation  
-Se ensamblan todas las sesiones en orden temporal, formando historiales largos y complejos.
-
----
-
-## Métricas del Benchmark
-
-Dado que las respuestas son abiertas, no se usa exact match.  
-El benchmark utiliza **LLM-as-a-judge**. Deben usar el mismo prompt dado en este repo
----
-
-# Restricción de modelos permitidos
-
-Cada equipo puede usar **cualquier modelo de hasta 4B parámetros** para ejecutar cualquier parte del sistema que lleve a la respuesta a la pregunta.
-
-Esto incluye:
-
-- Modelos locales (Qwen3-4B, Gemma-3-4B, etc.)  
-
-El objetivo es evaluar **memoria y eficiencia**, no fuerza bruta ni modelos gigantes.
-
-# Benchmark especial del Investigathón (muy importante)
-
-Para este track, además del benchmark oficial, **generamos nuestro propio conjunto adicional** con 500 preguntas adicionales utilizando los historiales de las preguntas originales de las cuales les entregaremos:
-
-### **✔ 250 nuevas preguntas con sus respuestas**  
-Podran usar estas preguntas como set de evaluación para evaluar el score de su sistema
-
-### **✔ Otras 250 preguntas, pero sin las respuestas**  
-Este sera el set de held out que usaremos nosotros para evaluar la calidad de sus sistemas. 
-
-### **Entrega OBLIGATORIA**  
-Deben subir un archivo con las respuestas para estas 250 preguntas:
-
-**📅 Fecha límite para la entrega de respuesta de set de HELD OUT:**  
-**11/12 a las 16:00 (24hs antes de la final del 12/12)**
-Vamos a enviarle en la proxima semana por mail los detalles de como enviarnos las respuestas
-
-### **Evaluación**  
-La evaluación la haremos automáticamente usando **GPT-5-mini** con el mismo prompt del `JudgeAgent` incluido en este repositorio.
-
-Esto sirve para tener una medicion interna de la calidad de sus metodos.
-
-Recomendamos usar el mismo modelo ustedes para la evaluacion. 
-
+### History Compilation  
+All sessions are assembled in temporal order, forming long and complex histories.
 
 ---
 
-# Qué deben reportar los equipos
+## Benchmark Metrics
 
-Los resultados de su investigación deben incluir al menos estas métricas:
-
-### **1. Score**  
-Exactitud promedio según el juez LLM.
-
-### **2. Latencia**  
-Tiempo promedio por pregunta.
-
-### **3. Varianza de la latencia**  
-Varianza en la latencia de los experimentos
-
-### **4. AVG Context Length**  
-Longitud promedio del contexto enviado al modelo por pregunta.  
-Esto permite comparar:  
-- métodos que recuperan poco (RAG)  
-- métodos con compresión o resúmenes dinámicos
-
-Incluyan estas métricas en sus tablas y gráficas.
+Since answers are open-ended, exact match is not used.  
+The benchmark uses **LLM-as-a-judge**. You must use the same prompt provided in the repository.
 
 ---
+
+# Model Restrictions
+
+Each team may use **any model up to 4B parameters** for any part of the system.
+
+This includes:
+
+- Local models (Qwen3-4B, Gemma-3-4B, etc.)
+
+The goal is to evaluate **memory and efficiency**, not brute force or large models.
+
+---
+
+# Special Investigathon Benchmark (Very Important)
+
+For this track, in addition to the official benchmark, **we generated an additional set** with 500 new questions using the original histories:
+
+### ✔ 250 new questions with answers  
+You can use these as an evaluation set for your system.
+
+### ✔ 250 additional questions without answers  
+This is the held-out set that we will use to evaluate your system.
+
+---
+
+### Mandatory Submission
+
+You must submit a file with answers for these 250 questions:
+
+**📅 Deadline:**  
+**December 11 at 16:00 (24 hours before the final on December 12)**  
+
+Details on how to submit will be sent by email next week.
+
+---
+
+### Evaluation
+
+We will evaluate automatically using **GPT-5-mini** with the same `Judge` prompt included in the repository.
+
+We recommend using the same model for your own evaluation.
+
+---
+
+# What Teams Must Report
+
+Your results must include at least the following metrics:
+
+### 1. Score  
+Average accuracy according to the LLM judge.
+
+### 2. Latency  
+Average time per question.
+
+### 3. Latency Variance  
+Variance of latency across experiments.
+
+### 4. Average Context Length  
+Average length of the context sent to the model per question.
+
+This allows comparison between:
+- Retrieval-heavy methods (RAG)  
+- Compression or dynamic summarization approaches  
+
+Include these metrics in your tables and plots.
+
+---
+
 # Baseline
-Además de reportar las métricas principales, cada equipo debe incluir una comparación directa contra un baseline estándar de Retrieval-Augmented Generation (RAG) bajo las mismas restricciones (modelo ≤ 4B parámetros). Este repo brinda una implementacion de este RAG y pueden encontrar las instrucciones para correrlo en README.md.
 
-![Diagrama](images/RAGImage.png)
+In addition to reporting main metrics, each team must include a comparison against a standard **Retrieval-Augmented Generation (RAG)** baseline under the same constraints (≤ 4B model).
 
+This repository provides an implementation of this RAG baseline. Instructions are available in the README.
 
-Los tutores del evento no se hacen responsables por cualquier error que pueda haber en la implementación brindada para el RAG (por favor, avisen si encuentran alguno). La idea es que no usen el repositorio como una caja negra. Si existe algún error en el repositorio (si hay un error, no fue hecho adrede), los equipos son responsables por haber utilizado código incorrecto.
-
-
-#  Criterios de Evaluación
-Ademas del resultado final en el set de held out, se evaluara en los equipos el proceso completo de investigacion, desde la prolijidad hasta la creatividad de las ideas. 
-
+The organizers are not responsible for errors in the provided RAG implementation. Teams are expected to understand and verify the code they use.
 
 ---
+
+# Evaluation Criteria
+
+Beyond final performance on the held-out set, teams will also be evaluated on the **entire research process**, including clarity, rigor, and creativity of ideas.

@@ -1,15 +1,24 @@
 import argparse
 import json
 import os
-from dotenv import load_dotenv
-from src.models.LiteLLMModel import LiteLLMModel
-from src.agents.JudgeAgent import JudgeAgent
-from src.agents.RAGAgent import RAGAgent
-from src.datasets.LongMemEvalDataset import LongMemEvalDataset
-from config.config import Config
+import sys
 import time
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from config.config import Config
+from src.agents.Judge import Judge
+from src.agents.RAG import RAG
+from src.datasets.LongMemEvalDataset import LongMemEvalDataset
+from src.models.LiteLLMModel import LiteLLMModel
 
 load_dotenv()
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run LongMemEval evaluation pipeline")
@@ -17,33 +26,34 @@ def parse_args():
         "--memory-model",
         type=str,
         default="ollama/gemma3:4b",
-        help="Model name for memory/RAG agent (default: ollama/gemma3:4b)"
+        help="Model name for memory/RAG agent (default: ollama/gemma3:4b)",
     )
     parser.add_argument(
         "--judge-model",
         type=str,
-        default="openai/gpt-5-mini",#"openai/gpt-5-mini",
-        help="Model name for judge agent (default: openai/gpt-5-mini)"
+        default="openai/gpt-5-mini",
+        help="Model name for judge agent (default: openai/gpt-5-mini)",
     )
     parser.add_argument(
         "--dataset-type",
         type=str,
         default="short",
         choices=["oracle", "short"],
-        help="Dataset type: oracle, short (default: short)"
+        help="Dataset type: oracle, short (default: short)",
     )
     parser.add_argument(
         "--dataset-set",
         type=str,
         default="investigathon_evaluation",
         choices=["longmemeval", "investigathon_evaluation", "investigathon_held_out"],
-        help="Dataset set to use (default: longmemeval)"
+        help="Dataset set to use (default: longmemeval)",
     )
     parser.add_argument(
-        "-n", "--num-samples",
+        "-n",
+        "--num-samples",
         type=int,
         default=500,
-        help="Number of samples to process (default: 10)"
+        help="Number of samples to process (default: 10)",
     )
     return parser.parse_args()
 
@@ -58,36 +68,39 @@ config = Config(
     N=args.num_samples,
 )
 
-print(f"\nInitializing models...")
+print("\nInitializing models...")
 print(f"  Memory Model: {config.memory_model_name}")
 print(f"  Judge Model: {config.judge_model_name}")
 print(f"  Embedding Model: {config.embedding_model_name}")
 
 memory_model = LiteLLMModel(config.memory_model_name)
 judge_model = LiteLLMModel(config.judge_model_name)
-judge_agent = JudgeAgent(model=judge_model)
-memory_agent = RAGAgent(model=memory_model, embedding_model_name=config.embedding_model_name)
+judge_agent = Judge(model=judge_model)
+memory_agent = RAG(model=memory_model, embedding_model_name=config.embedding_model_name)
 
-longmemeval_dataset = LongMemEvalDataset(config.longmemeval_dataset_type, config.longmemeval_dataset_set)
+longmemeval_dataset = LongMemEvalDataset(
+    config.longmemeval_dataset_type, config.longmemeval_dataset_set
+)
 
-# Create results directory
-results_dir = f"data/results/RAG/{config.longmemeval_dataset_set}/{config.longmemeval_dataset_type}/embeddings_{config.embedding_model_name.replace('/', '_')}_memory_{config.memory_model_name.replace('/', '_')}_judge_{config.judge_model_name.replace('/', '_')}"
+results_dir = (
+    f"data/results/RAG/{config.longmemeval_dataset_set}/{config.longmemeval_dataset_type}/"
+    f"embeddings_{config.embedding_model_name.replace('/', '_')}_memory_{config.memory_model_name.replace('/', '_')}"
+    f"_judge_{config.judge_model_name.replace('/', '_')}"
+)
 os.makedirs(results_dir, exist_ok=True)
 
 print(f"\nResults will be saved to: {results_dir}")
-print(f"Processing samples...")
+print("Processing samples...")
 print("=" * 100)
-
 
 print(f"Dataset length: {len(longmemeval_dataset)}")
 i = 0
 for instance in longmemeval_dataset[: config.N]:
-    
     print(f"Instancia n° {i}")
     i += 1
-    
+
     result_file = f"{results_dir}/{instance.question_id}.json"
-   
+
     if os.path.exists(result_file):
         print(f"Skipping {instance.question_id} because it already exists", flush=True)
         continue
@@ -98,8 +111,7 @@ for instance in longmemeval_dataset[: config.N]:
 
     if config.longmemeval_dataset_set != "investigathon_held_out":
         answer_is_correct = judge_agent.judge(instance, predicted_answer)
-    
-    # Save result
+
     with open(result_file, "w", encoding="utf-8") as f:
         result = {
             "question_id": instance.question_id,

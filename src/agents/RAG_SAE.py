@@ -1,10 +1,10 @@
 import numpy as np
 from src.datasets.LongMemEvalDataset import LongMemEvalInstance
-from src.agents.RAGAgent import (
+from src.agents.RAG import (
     embed_text as rag_embed_text,
     get_messages_and_embeddings as get_rag_messages_and_embeddings,
 )
-from src.agents.SAEAgent import (
+from src.agents.SAE import (
     embed_text as sae_embed_text,
     get_messages_and_embeddings as get_sae_messages_and_embeddings,
 )
@@ -19,7 +19,7 @@ def retrieve_most_relevant_messages(instance: LongMemEvalInstance, sae_embedding
     sae_embeddings = np.vstack(sae_embeddings)
     rag_similarity_scores = np.dot(rag_embeddings, rag_question_embedding)
     sae_similarity_scores = np.dot(sae_embeddings, sae_question_embedding)
- 
+
     combined_similarity_scores = np.sqrt(rag_similarity_scores**2 + sae_similarity_scores**2)
     most_relevant_messages_indices = np.argsort(combined_similarity_scores)[::-1][:k]
     most_relevant_messages = [messages[i] for i in most_relevant_messages_indices]
@@ -27,7 +27,7 @@ def retrieve_most_relevant_messages(instance: LongMemEvalInstance, sae_embedding
     return most_relevant_messages, time_most_relevant_messages
 
 
-class RAGSAEAgent:
+class RAG_SAE:
     def __init__(self, generator_model, sae_embedding_model, sae_model, hook_name, rag_embedding_model_name):
         self.generator_model = generator_model
         self.sae_embedding_model = sae_embedding_model

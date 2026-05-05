@@ -1,16 +1,24 @@
 import argparse
 import json
 import os
-from dotenv import load_dotenv
-import torch
-from transformer_lens import HookedTransformer
-from sae_lens import SAE
-from src.models.LiteLLMModel import LiteLLMModel
-from src.agents.JudgeAgent import JudgeAgent
-from src.agents.RAGSAEAgent import RAGSAEAgent
-from src.datasets.LongMemEvalDataset import LongMemEvalDataset
-from config.config import Config
+import sys
 import time
+from pathlib import Path
+
+import torch
+from dotenv import load_dotenv
+from sae_lens import SAE as SAELens
+from transformer_lens import HookedTransformer
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from config.config import Config
+from src.agents.Judge import Judge
+from src.agents.SAE import SAE
+from src.datasets.LongMemEvalDataset import LongMemEvalDataset
+from src.models.LiteLLMModel import LiteLLMModel
 
 load_dotenv()
 
@@ -21,33 +29,34 @@ def parse_args():
         "--memory-model",
         type=str,
         default="ollama/gemma3:4b",
-        help="Model name for memory/RAG agent (default: ollama/gemma3:4b)"
+        help="Model name for memory/RAG agent (default: ollama/gemma3:4b)",
     )
     parser.add_argument(
         "--judge-model",
         type=str,
         default="openai/gpt-5-mini",
-        help="Model name for judge agent (default: openai/gpt-5-mini)"
+        help="Model name for judge agent (default: openai/gpt-5-mini)",
     )
     parser.add_argument(
         "--dataset-type",
         type=str,
         default="short",
         choices=["oracle", "short"],
-        help="Dataset type: oracle, short (default: short)"
+        help="Dataset type: oracle, short (default: short)",
     )
     parser.add_argument(
         "--dataset-set",
         type=str,
-        default="investigathon_held_out",
+        default="investigathon_evaluation",
         choices=["longmemeval", "investigathon_evaluation", "investigathon_held_out"],
-        help="Dataset set to use (default: longmemeval)"
+        help="Dataset set to use (default: longmemeval)",
     )
     parser.add_argument(
-        "-n", "--num-samples",
+        "-n",
+        "--num-samples",
         type=int,
         default=500,
-        help="Number of samples to process (default: 10)"
+        help="Number of samples to process (default: 10)",
     )
     return parser.parse_args()
 
@@ -64,19 +73,18 @@ config = Config(
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-print(f"\nInitializing models...")
+print("\nInitializing models...")
 print(f"  Memory Model (generator): {config.memory_model_name}")
 print(f"  Judge Model: {config.judge_model_name}")
-print(f"  Embedding Model: {config.embedding_model_name}")
 
 generator_model = LiteLLMModel(config.memory_model_name)
 judge_model = LiteLLMModel(config.judge_model_name)
-judge_agent = JudgeAgent(model=judge_model)
+judge_agent = Judge(model=judge_model)
 
 sae_base_model_name = "gemma-2b-it"
 sae_release = "gemma-2b-it-res-jb"
 sae_id = "blocks.12.hook_resid_post"
-hook_name = "blocks.12.hook_resid_post" 
+hook_name = "blocks.12.hook_resid_post"
 
 print(f"  SAE Base Model: {sae_base_model_name}")
 print(f"  SAE Release: {sae_release}")
@@ -88,44 +96,42 @@ sae_base_model = HookedTransformer.from_pretrained_no_processing(
     dtype=torch.bfloat16,
 )
 
-sae, sae_cfg, sparsity = SAE.from_pretrained(
+sae, sae_cfg, sparsity = SAELens.from_pretrained(
     release=sae_release,
     sae_id=sae_id,
     device=device,
 )
 sae.eval()
 
-memory_agent = RAGSAEAgent(
+memory_agent = SAE(
     generator_model=generator_model,
-    sae_embedding_model=sae,
-    sae_model=sae_base_model,
+    sae=sae,
+    base_model=sae_base_model,
     hook_name=hook_name,
-    rag_embedding_model_name=config.embedding_model_name,
 )
 
-longmemeval_dataset = LongMemEvalDataset(config.longmemeval_dataset_type, config.longmemeval_dataset_set)
+longmemeval_dataset = LongMemEvalDataset(
+    config.longmemeval_dataset_type, config.longmemeval_dataset_set
+)
 
 results_dir = (
-    f"data/results/RAGSAE/{config.longmemeval_dataset_set}/{config.longmemeval_dataset_type}/"
-    f"SAE_{sae_release.replace('/', '_')}_{sae_id}_embeddings_{config.embedding_model_name.replace('/', '_')}_generator_{config.memory_model_name.replace('/', '_')}"
-    f"_judge_{config.judge_model_name.replace('/', '_')}_cleaned"
+    f"data/results/SAE/{config.longmemeval_dataset_set}/{config.longmemeval_dataset_type}/"
+    f"SAE_{sae_release.replace('/', '_')}_{sae_id}_generator_{config.memory_model_name.replace('/', '_')}"
+    f"_judge_{config.judge_model_name.replace('/', '_')}"
 )
 os.makedirs(results_dir, exist_ok=True)
 
-
 print(f"\nResults will be saved to: {results_dir}")
-print(f"Processing samples...")
+print("Processing samples...")
 print("=" * 100)
-
 
 print(f"Dataset length: {len(longmemeval_dataset)}")
 
 i = 0
-for instance in longmemeval_dataset[: config.N]: #MODIFIQUE ESTO
-    
-    print(f"Instance n° {i}")
+for instance in longmemeval_dataset[: config.N]:
+    print(f"Instancia n° {i}")
     i += 1
-    
+
     result_file = f"{results_dir}/{instance.question_id}.json"
 
     if os.path.exists(result_file):
@@ -139,14 +145,13 @@ for instance in longmemeval_dataset[: config.N]: #MODIFIQUE ESTO
     if config.longmemeval_dataset_set != "investigathon_held_out":
         answer_is_correct = judge_agent.judge(instance, predicted_answer)
 
-    # Save result
     with open(result_file, "w", encoding="utf-8") as f:
         result = {
             "question_id": instance.question_id,
             "question": instance.question,
             "predicted_answer": predicted_answer,
-            # "predicted_relevant_messages": predicted_relevant_messages,
-            # "elapsed_time": elapsed_time,
+            "predicted_relevant_messages": predicted_relevant_messages,
+            "elapsed_time": elapsed_time,
         }
         if config.longmemeval_dataset_set != "investigathon_held_out":
             result["answer"] = instance.answer
