@@ -18,6 +18,15 @@ This makes the repository useful both as:
 
 For the benchmark/task definition, evaluation protocol, and dataset details, see `benchmark_explanation.md`.
 
+## What This Project Is Really About
+
+At a high level, this repository is an experiment in **memory retrieval for long conversations**, where the key hypothesis is:
+
+**SAE-derived features retrieve useful evidence differently from standard semantic embeddings, and combining both may improve long-context memory retrieval.**
+
+Moreover, using Sparse Autoencoders makes the memory retrieval **interpretable**. Check out the poster [here](https://julianszere.github.io/curriculum/sae-poster.pdf) (spanish only)
+
+
 ## Repository Overview
 
 The most important entrypoints are:
@@ -202,19 +211,3 @@ The code also caches message embeddings to avoid recomputing them:
 For non-held-out datasets, answers are evaluated with `Judge`, which uses an LLM as a binary correctness judge against the reference answer.
 
 For the held-out dataset, no gold answer is available, so the scripts only save predictions.
-
-## What This Project Is Really About
-
-At a high level, this repository is not just a generic benchmark starter. It is an experiment in **memory retrieval for long conversations**, where the key hypothesis is:
-
-**SAE-derived features may retrieve useful evidence differently from standard semantic embeddings, and combining both may improve long-context memory retrieval.**
-
-If you are presenting this project, a concise description would be:
-
-> A hybrid SAE-based RAG system for long-memory conversational question answering on LongMemEval/Investigathon data.
-
-## Known Caveats
-
-- Some helper files in the repo look exploratory rather than production-ready.
-- The judge uses `eval()` on the model output, so malformed judge responses can break evaluation.
-- `scripts/RAG_SAE_retrieval.py` currently saves a reduced output schema compared with `scripts/RAG_retrieval.py` and `scripts/SAE_retrieval.py`.
