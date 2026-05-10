@@ -1,5 +1,13 @@
 # SAE-Based RAG for LongMemEval / Investigathon
 
+> 🏆 **1st place — Investigathon hackathon.** This project won first place at the Investigathon LLM Track.
+
+<p align="center">
+  <a href="poster_investigaton.pdf">
+    <img src="images/poster_investigaton.png" alt="Investigathon poster: SAE-based RAG for long-memory QA" width="800">
+  </a>
+</p>
+
 This repository implements a memory retrieval pipeline for long-horizon conversational QA, with a focus on a **Sparse Autoencoder (SAE) based Retrieval-Augmented Generation (RAG)** setup.
 
 The project works on LongMemEval-style instances: each example contains many past chat sessions, a final question, and optionally a ground-truth answer. The goal is to recover the most relevant past messages and answer the question using only that retrieved evidence.
